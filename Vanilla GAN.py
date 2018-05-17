@@ -75,13 +75,6 @@ GEN_UPDATE = 1
 
 tf.reset_default_graph()
 
-
-# Frist we define $P_{X}$ which distribution of our real data x
-
-# In[2]:
-
-
-# Training data
 class RealDistribution:
     def __init__(self):
         self.mu = 5
@@ -92,30 +85,14 @@ class RealDistribution:
         return samples
 
 
-# We then define $P_{z}$ which is noise distribution, we will use sampling from this distribution and feed it in our generator
-
-# In[3]:
-
-
-# Noise data
 class NoiseDistribution:
     def __init__(self):
         self.low = 0
-        self.high = 10
+        self.high = 7
 
     def sample(self, N):
         samples = np.random.uniform(self.low, self.high, N)
         return samples
-
-
-# ----
-#   
-# In this tutorial we define  
-# $g(x)$ as a linear function ($z*w$) 
-# 
-# ** Tensorflow info: each variable works in different scope
-
-# In[4]:
 
 
 class GAN:
@@ -133,47 +110,11 @@ class GAN:
         logits = self.linear(input, 'gen')
         return logits
 
-
-# Discrimnator works by differentiate if data come from real or fake.
-# so we use sigmoid as last function
-
-# In[5]:
-
-
-class GAN(GAN):
     def discriminator(self, input):
-            logits = self.linear(input, 'discr')
-            pred = tf.sigmoid(logits)
-            return pred
+        logits = self.linear(input, 'discr')
+        pred = tf.sigmoid(logits)
+        return pred
 
-
-# ____
-# **Creating Model**
-# 
-# About hessian, if you see the tutorial. they used heissian to know that the descriminator is in the saddle point. 
-# I am really not sure and understand about the plot. but if hessian eigen values is used to  see the multivariable domain
-# - If the Hessian at a given point has all positive eigenvalues then the multivariable domain is “concave up”
-# - if it's negative then it's convave down. 
-# - if it's one negative and one positive then it's the saddle point, the graph is concave up in one direction and concave down in other direction
-# If all of the eigenvalues are negative, it is said to be a negative-definite matrix. This is like “concave down”
-# ### Generator and Discriminator Model
-# 1. Generating the variable for generative model (G). 
-# 2. Generating variable for Discrimnative model (D).
-# 3. Generating loss function 
-#     * $G = (1-D(G(z))$
-#     * $D = D + (1-D(G(z))$
-#     
-# 4. Getting a list of parameter, we use that to feed the optimizer
-# 5. Set the optimizer for each variable using gradient descent by attaching the loss function
-#    and which variable to update (minimizing the loss)
-# 6. function in tf to generate the gradient (it not important in our graph, this is used to see 
-#    the gradient. after
-# 
-
-# In[6]:
-
-
-class GAN(GAN):
     def __init__(self):
         self.games = GAMES
         self.discriminator_steps = DISCR_UPDATE
@@ -209,7 +150,6 @@ class GAN(GAN):
         self.gen_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='GEN')
         self.discr_params = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope='DISC')
         self.all_params = tf.trainable_variables()
-        
         # 5. Optimizers (this optimizer who's actually updating the parameter)
         self.opt_gen = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(
             self.loss_gen,
@@ -220,40 +160,15 @@ class GAN(GAN):
             var_list=self.discr_params
         )
         
-        
         # 6. gradients (This function is just used to calculate the gradient after updating it 
         # using gradient descent)
         self.grad_discr = tf.gradients(self.loss_discr, self.discr_params)[0]
         self.grad_gen = tf.gradients(self.loss_gen, self.gen_params)[0]
         
-        
-        # Hessian computation
-#         hessian = []
-#         for v1 in self.all_params:
-#             temp = []
-#             for v2 in self.all_params:
-#                 # computing derivative twice, first w.r.t v2 and then w.r.t v1
-#                 temp.append(tf.gradients(tf.gradients(-self.loss_discr, v2)[0], v1)[0])
-#             temp = [tf.constant(0, dtype=tf.float32) if t == None else t for t in temp] # tensorflow returns None when there is no gradient, so we replace None with 0
-#             temp = tf.stack(temp)
-#             hessian.append(temp)
-#         self.hessian = tf.squeeze(tf.stack(hessian))
-
-
-# The loss function for generator and discriminator as seen in the algorithm above and define in the code below.  
-# loss $gen = 1 - D(x)$  
-# loss $discr = D(x) + (1-D(x))$
-
-# In[7]:
-
-
-class GAN(GAN):
     def train(self):
         init = tf.global_variables_initializer()
-
         with tf.Session() as sess:
             sess.run(init)
-            
             x = self.data.sample(self.num_samples)
             objective_function = []
             grad_magn_discr = []
@@ -336,15 +251,15 @@ class GAN(GAN):
             plt.subplot(gs[1,1])
             plt.plot(range(self.games),grad_magn_gen)
             plt.title('Gradient magnitude - Generator')
-            plt.savefig('img/summary_'+str(self.games)+'_'+str(self.discriminator_steps)+                  '_'+str(self.generator_steps)+'.eps')
-            plt.savefig('img/summary_'+str(self.games)+'_'+str(self.discriminator_steps)+                  '_'+str(self.generator_steps)+'.png')
+            plt.savefig('img/summary_'+str(self.games)+'_'+str(self.discriminator_steps)+'_'+str(self.generator_steps)+'.eps')
+            plt.savefig('img/summary_'+str(self.games)+'_'+str(self.discriminator_steps)+'_'+str(self.generator_steps)+'.png')
 
             # Animation
             print('\nCreating GIF animation...')
             fig = plt.figure()
             plt.axis('off')
             anim = animation.FuncAnimation(fig, self.animate, frames=frames)
-            anim.save('img/img_'+str(self.games)+'_'+str(self.discriminator_steps)+                  '_'+str(self.generator_steps)+'.gif', writer='imagemagick', fps=int(120/self.skip_log))
+            anim.save('img/img_'+str(self.games)+'_'+str(self.discriminator_steps)+'_'+str(self.generator_steps)+'.gif', writer='imagemagick', fps=int(120/self.skip_log))
             self.delete()
 
             
