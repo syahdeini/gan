@@ -9,3 +9,4 @@ ___
 Source 
 1. https://github.com/emsansone/GAN/blob/master/gan.py
 2. https://github.com/aybchan/gans
+3. Paper from Ian goodfellow and friends : https://arxiv.org/pdf/1406.2661.pdf
